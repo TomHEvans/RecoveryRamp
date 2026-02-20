@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recovery Ramp Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #181818;
+    --surface2: #212121;
+    --border: #2a2a2a;
+    --border-bright: #3a3a3a;
+    --text: #e8e8e8;
+    --text-dim: #666;
+    --text-mid: #999;
+
+    --rest:    #2a2a2a;
+    --rest-t:  #777;
+    --upper:   #0d3a5c;
+    --upper-t: #5bb3f0;
+    --wendler: #3a2800;
+    --wendler-t: #f0b84a;
+    --skill:   #0d3320;
+    --skill-t: #4fd98e;
+    --leg:     #2e1a00;
+    --leg-t:   #f09a3a;
+
+    --accent: #e8e8e8;
+    --complete: #4fd98e;
+    --complete-dim: #1a3d2a;
+    --radius: 6px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 28px 32px 24px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+  }
+
+  header h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: -0.5px;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  header p {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    margin-top: 6px;
+  }
+
+  .header-right {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .progress-pill {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--complete);
+    background: var(--complete-dim);
+    border: 1px solid #2a5a3a;
+    padding: 5px 12px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .btn-reset {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    background: none;
+    border: 1px solid var(--border);
+    padding: 5px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-reset:hover { border-color: #ff5555; color: #ff5555; }
+
+  /* ── PHASE TABS ── */
+  .phase-nav {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    overflow-x: auto;
+  }
+
+  .phase-tab {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    padding: 14px 20px 12px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    color: var(--text-dim);
+    white-space: nowrap;
+    transition: all 0.15s;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .phase-tab:hover { color: var(--text-mid); }
+  .phase-tab.active {
+    color: var(--text);
+    border-bottom-color: var(--text);
+  }
+
+  /* ── MAIN ── */
+  main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 28px 32px 60px;
+  }
+
+  /* ── DAY BLOCK ── */
+  .day-block {
+    margin-bottom: 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .day-block.day-complete {
+    border-color: #2a4a35;
+  }
+
+  .day-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    cursor: pointer;
+    background: var(--surface);
+    user-select: none;
+    gap: 12px;
+  }
+
+  .day-header:hover { background: var(--surface2); }
+
+  .day-label {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.3px;
+  }
+
+  .day-meta {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex: 1;
+    margin-left: 14px;
+    flex-wrap: wrap;
+  }
+
+  .type-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .day-progress {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+
+  .day-progress.done { color: var(--complete); }
+
+  .chevron {
+    font-size: 10px;
+    color: var(--text-dim);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+
+  .day-block.open .chevron { transform: rotate(180deg); }
+
+  /* ── EXERCISES ── */
+  .exercises {
+    display: none;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+  }
+
+  .day-block.open .exercises { display: block; }
+
+  .exercise-row {
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    gap: 0;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+    transition: background 0.15s;
+  }
+
+  .exercise-row:last-child { border-bottom: none; }
+  .exercise-row.completed { background: #111; opacity: 0.6; }
+  .exercise-row:hover { background: var(--surface); }
+
+  .ex-check {
+    margin-top: 1px;
+  }
+
+  .ex-check input[type="checkbox"] {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid var(--border-bright);
+    border-radius: 3px;
+    cursor: pointer;
+    position: relative;
+    background: var(--surface);
+    transition: all 0.15s;
+    display: block;
+  }
+
+  .ex-check input[type="checkbox"]:checked {
+    background: var(--complete);
+    border-color: var(--complete);
+  }
+
+  .ex-check input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 5px;
+    height: 9px;
+    border: 2px solid #0f0f0f;
+    border-top: none;
+    border-left: none;
+    transform: rotate(45deg);
+  }
+
+  .ex-body {
+    padding: 0 12px;
+  }
+
+  .ex-name {
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.3;
+    margin-bottom: 4px;
+  }
+
+  .exercise-row.completed .ex-name {
+    text-decoration: line-through;
+    color: var(--text-dim);
+  }
+
+  .ex-metrics {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+
+  .ex-metric {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-mid);
+  }
+
+  .ex-metric span {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-right: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .ex-notes {
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    font-style: italic;
+  }
+
+  /* ── SET LOGGER ── */
+  .set-logger {
+    margin-top: 10px;
+  }
+
+  .set-logger-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+
+  .sets-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+
+  .set-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .set-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    width: 22px;
+    flex-shrink: 0;
+  }
+
+  .set-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    padding: 4px 8px;
+    width: 70px;
+    transition: border-color 0.15s;
+  }
+
+  .set-input:focus {
+    outline: none;
+    border-color: var(--border-bright);
+  }
+
+  .set-input::placeholder { color: var(--text-dim); }
+
+  .set-input-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+
+  .set-check {
+    width: 14px;
+    height: 14px;
+    border: 1.5px solid var(--border-bright);
+    border-radius: 3px;
+    appearance: none;
+    cursor: pointer;
+    background: var(--surface);
+    transition: all 0.15s;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .set-check:checked {
+    background: var(--complete);
+    border-color: var(--complete);
+  }
+
+  .set-check:checked::after {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: 0px;
+    width: 5px;
+    height: 8px;
+    border: 2px solid #0f0f0f;
+    border-top: none;
+    border-left: none;
+    transform: rotate(45deg);
+  }
+
+  .ex-actions {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding-top: 1px;
+    flex-shrink: 0;
+  }
+
+  .btn-note {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 3px 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn-note:hover { border-color: var(--border-bright); color: var(--text-mid); }
+
+  /* ── SESSION NOTE ── */
+  .session-note-wrap {
+    display: none;
+    margin-top: 8px;
+  }
+
+  .session-note-wrap.open { display: block; }
+
+  .session-note {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    padding: 8px 10px;
+    resize: vertical;
+    min-height: 56px;
+    transition: border-color 0.15s;
+    line-height: 1.5;
+  }
+
+  .session-note:focus {
+    outline: none;
+    border-color: var(--border-bright);
+  }
+
+  .session-note::placeholder { color: var(--text-dim); }
+
+  /* ── REST DAY ── */
+  .rest-day-body {
+    padding: 20px 18px;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+  }
+
+  .rest-instructions {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.6;
+    font-style: italic;
+    max-width: 560px;
+  }
+
+  .rest-check-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .rest-check-row label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-mid);
+    cursor: pointer;
+  }
+
+  /* ── PHASE HEADER ── */
+  .phase-header {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    padding: 20px 0 8px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Recovery Ramp</h1>
+    <p>Knee surgery return-to-training · 2 weeks · feeds into 8-week Hyrox plan</p>
+  </div>
+  <div class="header-right">
+    <div class="progress-pill" id="globalProgress">0 / 0 complete</div>
+    <button class="btn-reset" onclick="confirmReset()">Reset all</button>
+  </div>
+</header>
+
+<nav class="phase-nav">
+  <button class="phase-tab active" data-phase="all" onclick="switchPhase('all', this)">All days</button>
+  <button class="phase-tab" data-phase="phase1" onclick="switchPhase('phase1', this)">Phase 1 – Rest</button>
+  <button class="phase-tab" data-phase="phase2" onclick="switchPhase('phase2', this)">Phase 2 – Upper only</button>
+  <button class="phase-tab" data-phase="phase3" onclick="switchPhase('phase3', this)">Phase 3 – Leg reintro</button>
+</nav>
+
+<main id="main"></main>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────
+
+const PLAN = [
+  // Phase 1 – Full rest
+  {
+    day: "Day 1", phase: "phase1", isRest: true,
+    types: ["Rest"],
+    notes: "Post-surgery. No exercise of any kind. Prioritise sleep, elevation and pain management.",
+    exercises: []
+  },
+  {
+    day: "Day 2", phase: "phase1", isRest: true,
+    types: ["Rest"],
+    notes: "Rest. Focus on keeping the knee elevated where possible. Hydrate well.",
+    exercises: []
+  },
+  {
+    day: "Day 3", phase: "phase1", isRest: true,
+    types: ["Rest"],
+    notes: "Rest. Short slow walks around the house are fine if comfortable – not a workout.",
+    exercises: []
+  },
+  {
+    day: "Day 4", phase: "phase1", isRest: true,
+    types: ["Rest"],
+    notes: "Last mandatory rest day. Assess how the knee feels before starting Phase 2 tomorrow. If still in significant pain or swelling, extend rest by 1–2 days.",
+    exercises: []
+  },
+
+  // Phase 2 – Upper only
+  {
+    day: "Day 5", phase: "phase2", isRest: false,
+    types: ["Upper", "Skill"],
+    exercises: [
+      {
+        id: "d5-e1", type: "Upper",
+        name: "Seated DB Shoulder Press",
+        metric: "3 × 10", zone: "Light – RPE 5/10",
+        hasSets: true, setCount: 3, setFields: ["weight (kg)", "reps"],
+        notes: "First session back. Seated to keep load off the knee entirely. Stop if any referred discomfort. Keep load conservative."
+      },
+      {
+        id: "d5-e2", type: "Upper",
+        name: "Banded Pull-Apart",
+        metric: "3 × 15", zone: "Light band",
+        hasSets: true, setCount: 3, setFields: ["reps"],
+        notes: "Shoulder health / rotator cuff. Controlled tempo throughout."
+      },
+      {
+        id: "d5-e3", type: "Skill",
+        name: "OHS Mobility – Banded distraction L",
+        metric: "60 sec", zone: "Band",
+        hasSets: false, setCount: 1, setFields: [],
+        notes: "Resume daily OHS habit – seated or lying if standing is uncomfortable."
+      },
+      {
+        id: "d5-e4", type: "Skill",
+        name: "OHS Mobility – Banded distraction R",
+        metric: "60 sec", zone: "Band",
+        hasSets: false, setCount: 1, setFields: [],
+        notes: ""
+      }
+    ]
+  },
+  {
+    day: "Day 6", phase: "phase2", isRest: true,
+    types: ["Rest"],
+    notes: "Recovery day. No training. Elevate and ice if swelling present.",
+    exercises: []
+  },
+  {
+    day: "Day 7", phase: "phase2", isRest: false,
+    types: ["Upper", "Skill"],
+    exercises: [
+      {
+        id: "d7-e1", type: "Upper",
+        name: "DB Bench Press (flat, seated or lying)",
+        metric: "3 × 8", zone: "Light – RPE 5/10",
+        hasSets: true, setCount: 3, setFields: ["weight (kg)", "reps"],
+        notes: "Wendler bench target lift in Week 1 of main plan. No leg drive. Keep load well below working weight."
+      },
+      {
+        id: "d7-e2", type: "Upper",
+        name: "Single-arm DB Row",
+        metric: "3 × 10 each side", zone: "Moderate – RPE 5/10",
+        hasSets: true, setCount: 3, setFields: ["weight (kg)", "reps"],
+        notes: "Braced on a bench. No twisting."
+      },
+      {
+        id: "d7-e3", type: "Skill",
+        name: "OHS Mobility – Banded distraction L",
+        metric: "60 sec", zone: "Band",
+        hasSets: false, setCount: 1, setFields: [],
+        notes: ""
+      },
+      {
+        id: "d7-e4", type: "Skill",
+        name: "OHS Mobility – Banded distraction R",
+        metric: "60 sec", zone: "Band",
+        hasSets: false, setCount: 1, setFields: [],
+        notes: ""
+      }
+    ]
+  },
+
+  // Phase 3 – Leg reintroduction
+  {
+    day: "Day 8", phase: "phase3", isRest: false,
+    types: ["Upper", "Skill"],
+    exercises: [
+      {
+        id: "d8-e1", type: "Upper",
+        name: "DB Shoulder Press (seated)",
+        metric: "3 × 10", zone: "Moderate – RPE 6/10",
+        hasSets: true, setCount: 3, setFields: ["weight (kg)", "reps"],
+        notes: "Slightly more load than Day 5 if comfortable. Still seated. Back off if any anterior shoulder discomfort."
+      },
+      {
+        id: "d8-e2", type: "Upper",
+        name: "Banded Pull-Apart",
+        metric: "3 × 15", zone: "Light band",
+        hasSets: true, setCount: 3, setFields: ["reps"],
+        notes: ""
+      },
+      {
+        id: "d8-e3", type: "Skill",
+        name: "OHS Mobility – Banded distraction L",
+        metric: "60 sec", zone: "Band",
+        hasSets: false, setCount: 1, setFields: [],
+        notes: ""
+      },
+      {
+        id: "d8-e4", type: "Skill",
+        name: "OHS Mobility – Banded distraction R",
+        metric: "60 sec", zone: "Band",
+        hasSets: false, setCount: 1, setFields: [],
+        notes: ""
+      }
+    ]
+  },
+  {
+    day: "Day 9", phase: "phase3", isRest: true,
+    types: ["Rest"],
+    notes: "Rest day. Assess knee readiness for first leg work tomorrow.",
+    exercises: []
+  },
+  {
+    day: "Day 10", phase: "phase3", isRest: false,
+    types: ["Leg", "Upper", "Skill"],
+    exercises: [
+      {
+        id: "d10-e1", type: "Leg",
+        name: "Glute Bridge (bodyweight, double leg)",
+        metric: "3 × 15", zone: "Bodyweight",
+        hasSets: true, setCount: 3, setFields: ["reps"],
+        notes: "First leg exercise. Lying position – minimal knee load. Stop if any sharp pain. Green light test for the knee."
+      },
+      {
+        id: "d10-e2", type: "Leg",
+        name: "Seated Leg Extension (very light)",
+        metric: "2 × 10", zone: "Very light – RPE 4/10",
+        hasSets: true, setCount: 2, setFields: ["weight (kg)", "reps"],
+        notes: "⚠ Only if cleared by surgeon / physio for early quad activation. If in doubt, skip and replace with another glute bridge set."
+      },
+      {
+        id: "d10-e3", type: "Upper",
+        name: "DB Bench Press",
+        metric: "3 × 8", zone: "Moderate – RPE 6/10",
+        hasSets: true, setCount: 3, setFields: ["weight (kg)", "reps"],
+        notes: "Progress slightly from Day 7. Moving toward Wendler working range."
+      },
+      {
+        id: "d10-e4", type: "Upper",
+        name: "Single-arm DB Row",
+        metric: "3 × 10 each side", zone: "Moderate – RPE 6/10",
+        hasSets: true, setCount: 3, setFields: ["weight (kg)", "reps"],
+        notes: ""
+      },
+      {
+        id: "d10-e5", type: "Skill",
+        name: "OHS Mobility – Banded distraction L",
+        metric: "60 sec", zone: "Band",
+        hasSets: false, setCount: 1, setFields: [],
+        notes: ""
+      },
+      {
+        id: "d10-e6", type: "Skill",
+        name: "OHS Mobility – Banded distraction R",
+        metric: "60 sec", zone: "Band",
+        hasSets: false, setCount: 1, setFields: [],
+        notes: ""
+      }
+    ]
+  },
+  {
+    day: "Day 11", phase: "phase3", isRest: true,
+    types: ["Rest"],
+    notes: "Rest. Note how the knee responded to Day 10 leg work before progressing.",
+    exercises: []
+  },
+  {
+    day: "Day 12", phase: "phase3", isRest: false,
+    types: ["Wendler", "Leg", "Upper", "Skill"],
+    exercises: [
+      {
+        id: "d12-e1", type: "Wendler",
+        name: "Bench Press – Set 1",
+        metric: "5 reps", zone: "55% TM",
+        hasSets: true, setCount: 1, setFields: ["weight (kg)", "reps"],
+        notes: "First proper Wendler bench. Slightly below Week 1 plan % to account for detraining. No leg drive – feet flat or elevated."
+      },
+      {
+        id: "d12-e2", type: "Wendler",
+        name: "Bench Press – Set 2",
+        metric: "5 reps", zone: "65% TM",
+        hasSets: true, setCount: 1, setFields: ["weight (kg)", "reps"],
+        notes: ""
+      },
+      {
+        id: "d12-e3", type: "Wendler",
+        name: "Bench Press – Set 3",
+        metric: "5+ reps", zone: "75% TM",
+        hasSets: true, setCount: 1, setFields: ["weight (kg)", "reps"],
+        notes: "AMRAP – conservative. Stop 1–2 reps before failure. Re-establishing feel, not testing max."
+      },
+      {
+        id: "d12-e4", type: "Leg",
+        name: "Glute Bridge (bodyweight)",
+        metric: "3 × 15", zone: "Bodyweight",
+        hasSets: true, setCount: 3, setFields: ["reps"],
+        notes: "If Day 10 went well. Increase to single-leg only if double-leg feels very easy and pain-free."
+      },
+      {
+        id: "d12-e5", type: "Upper",
+        name: "Banded Pull-Apart",
+        metric: "3 × 15", zone: "Light band",
+        hasSets: true, setCount: 3, setFields: ["reps"],
+        notes: "Shoulder antagonist work."
+      },
+      {
+        id: "d12-e6", type: "Skill",
+        name: "OHS Mobility – Banded distraction L",
+        metric: "60 sec", zone: "Band",
+        hasSets: false, setCount: 1, setFields: [],
+        notes: ""
+      },
+      {
+        id: "d12-e7", type: "Skill",
+        name: "OHS Mobility – Banded distraction R",
+        metric: "60 sec", zone: "Band",
+        hasSets: false, setCount: 1, setFields: [],
+        notes: ""
+      }
+    ]
+  },
+  {
+    day: "Day 13", phase: "phase3", isRest: true,
+    types: ["Rest"],
+    notes: "Rest. Final rest day before the readiness check session tomorrow.",
+    exercises: []
+  },
+  {
+    day: "Day 14", phase: "phase3", isRest: false,
+    types: ["Wendler", "Leg", "Skill"],
+    exercises: [
+      {
+        id: "d14-e1", type: "Wendler",
+        name: "Shoulder Press – Set 1",
+        metric: "5 reps", zone: "55% TM",
+        hasSets: true, setCount: 1, setFields: ["weight (kg)", "reps"],
+        notes: "Mirror bench approach – slightly below Week 1 plan percentages. Seated if needed."
+      },
+      {
+        id: "d14-e2", type: "Wendler",
+        name: "Shoulder Press – Set 2",
+        metric: "5 reps", zone: "65% TM",
+        hasSets: true, setCount: 1, setFields: ["weight (kg)", "reps"],
+        notes: ""
+      },
+      {
+        id: "d14-e3", type: "Wendler",
+        name: "Shoulder Press – Set 3",
+        metric: "5+ reps", zone: "75% TM",
+        hasSets: true, setCount: 1, setFields: ["weight (kg)", "reps"],
+        notes: "AMRAP – conservative. Stop 1–2 reps before failure."
+      },
+      {
+        id: "d14-e4", type: "Leg",
+        name: "Bodyweight Box Squat (to high box)",
+        metric: "2 × 8", zone: "Bodyweight – RPE 4/10",
+        hasSets: true, setCount: 2, setFields: ["reps"],
+        notes: "Squat to chair height or above – minimal knee flexion. Only attempt if glute bridges have been pain-free. Bridge toward Wendler squats in Week 1."
+      },
+      {
+        id: "d14-e5", type: "Leg",
+        name: "Standing Calf Raise",
+        metric: "3 × 15", zone: "Bodyweight",
+        hasSets: true, setCount: 3, setFields: ["reps"],
+        notes: "Low-load lower leg activation. Minimal knee involvement."
+      },
+      {
+        id: "d14-e6", type: "Skill",
+        name: "OHS Mobility – Banded distraction L",
+        metric: "60 sec", zone: "Band",
+        hasSets: false, setCount: 1, setFields: [],
+        notes: "End of recovery ramp. If today went well, you're ready to begin Week 1 of the main Hyrox plan."
+      },
+      {
+        id: "d14-e7", type: "Skill",
+        name: "OHS Mobility – Banded distraction R",
+        metric: "60 sec", zone: "Band",
+        hasSets: false, setCount: 1, setFields: [],
+        notes: ""
+      }
+    ]
+  }
+];
+
+// ── TYPE STYLING ───────────────────────────────────────────────────────────
+
+const TYPE_STYLE = {
+  Rest:    { bg: "#1e1e1e", color: "#666" },
+  Upper:   { bg: "#0d2a40", color: "#5bb3f0" },
+  Wendler: { bg: "#2e1f00", color: "#f0b84a" },
+  Skill:   { bg: "#0a2818", color: "#4fd98e" },
+  Leg:     { bg: "#281200", color: "#f09a3a" }
+};
+
+const PHASE_LABELS = {
+  phase1: "Phase 1 – Full rest (Days 1–4)",
+  phase2: "Phase 2 – Upper body only (Days 5–7)",
+  phase3: "Phase 3 – Leg reintroduction (Days 8–14)"
+};
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+
+function loadState() {
+  try {
+    return JSON.parse(localStorage.getItem('recovery_ramp_v1') || '{}');
+  } catch(e) { return {}; }
+}
+
+function saveState(state) {
+  localStorage.setItem('recovery_ramp_v1', JSON.stringify(state));
+}
+
+let STATE = loadState();
+let currentPhase = 'all';
+
+// ── RENDER ─────────────────────────────────────────────────────────────────
+
+function getExState(exId) {
+  return STATE[exId] || { done: false, sets: {}, note: '', noteOpen: false };
+}
+
+function renderTypeTag(type) {
+  const s = TYPE_STYLE[type] || { bg: '#222', color: '#999' };
+  return `<span class="type-tag" style="background:${s.bg};color:${s.color}">${type}</span>`;
+}
+
+function renderSetLogger(ex, exState) {
+  if (!ex.hasSets || ex.setFields.length === 0) return '';
+  let html = `<div class="set-logger">
+    <div class="set-logger-label">Sets</div>
+    <div class="sets-list">`;
+
+  for (let i = 1; i <= ex.setCount; i++) {
+    const setData = exState.sets[i] || {};
+    html += `<div class="set-row">
+      <span class="set-num">S${i}</span>`;
+
+    ex.setFields.forEach(field => {
+      const key = field.replace(/\s+/g,'_');
+      const val = setData[key] || '';
+      const shortLabel = field === 'weight (kg)' ? 'kg' : field === 'reps' ? 'reps' : field;
+      html += `<span class="set-input-label">${shortLabel}</span>
+               <input class="set-input" type="text" inputmode="decimal"
+                 placeholder="–"
+                 value="${val}"
+                 onchange="updateSet('${ex.id}', ${i}, '${key}', this.value)"
+                 onclick="event.stopPropagation()">`;
+    });
+
+    html += `<input type="checkbox" class="set-check"
+               ${setData.done ? 'checked' : ''}
+               onchange="toggleSet('${ex.id}', ${i}, this.checked)"
+               onclick="event.stopPropagation()">
+             </div>`;
+  }
+
+  html += `</div></div>`;
+  return html;
+}
+
+function renderExercise(ex, dayIdx) {
+  const exState = getExState(ex.id);
+  const done = exState.done;
+  const ts = TYPE_STYLE[ex.type] || { bg: '#222', color: '#999' };
+
+  return `
+    <div class="exercise-row ${done ? 'completed' : ''}" id="exrow-${ex.id}">
+      <div class="ex-check">
+        <input type="checkbox" ${done ? 'checked' : ''}
+          onchange="toggleExercise('${ex.id}', ${dayIdx}, this.checked)">
+      </div>
+      <div class="ex-body">
+        <div class="ex-name">${ex.name}</div>
+        <div class="ex-metrics">
+          <div class="ex-metric"><span>target</span>${ex.metric}</div>
+          <div class="ex-metric"><span>zone/load</span>${ex.zone}</div>
+        </div>
+        ${ex.notes ? `<div class="ex-notes">${ex.notes}</div>` : ''}
+        ${renderSetLogger(ex, exState)}
+        <div class="session-note-wrap ${exState.noteOpen ? 'open' : ''}" id="note-wrap-${ex.id}">
+          <textarea class="session-note" placeholder="Add a note for this exercise…"
+            onchange="updateNote('${ex.id}', this.value)"
+            onclick="event.stopPropagation()">${exState.note || ''}</textarea>
+        </div>
+      </div>
+      <div class="ex-actions">
+        <button class="btn-note" onclick="toggleNote('${ex.id}', event)">
+          ${exState.noteOpen ? 'close' : '+ note'}
+        </button>
+      </div>
+    </div>`;
+}
+
+function getDayProgress(dayData) {
+  if (dayData.isRest) {
+    const restKey = dayData.day + '_rest';
+    return STATE[restKey] ? { done: 1, total: 1 } : { done: 0, total: 1 };
+  }
+  const total = dayData.exercises.length;
+  const done = dayData.exercises.filter(ex => (STATE[ex.id] || {}).done).length;
+  return { done, total };
+}
+
+function renderDay(dayData, idx) {
+  const prog = getDayProgress(dayData);
+  const allDone = prog.done === prog.total && prog.total > 0;
+  const isOpen = STATE['open_' + dayData.day] || false;
+
+  // Collect unique types for tags
+  const uniqueTypes = [...new Set(dayData.types)];
+
+  let html = `
+    <div class="day-block ${allDone ? 'day-complete' : ''} ${isOpen ? 'open' : ''}" id="dayblock-${idx}">
+      <div class="day-header" onclick="toggleDay(${idx}, '${dayData.day}')">
+        <span class="day-label">${dayData.day}</span>
+        <div class="day-meta">
+          ${uniqueTypes.map(t => renderTypeTag(t)).join('')}
+        </div>
+        <span class="day-progress ${allDone ? 'done' : ''}">
+          ${allDone ? '✓ done' : `${prog.done}/${prog.total}`}
+        </span>
+        <span class="chevron">▼</span>
+      </div>`;
+
+  if (dayData.isRest) {
+    const restKey = dayData.day + '_rest';
+    const checked = STATE[restKey] || false;
+    html += `
+      <div class="exercises ${isOpen ? '' : ''}">
+        <div class="rest-day-body">
+          <p class="rest-instructions">${dayData.notes}</p>
+          <div class="rest-check-row">
+            <input type="checkbox" class="set-check" id="rest-${idx}" ${checked ? 'checked' : ''}
+              onchange="toggleRest('${restKey}', ${idx}, this.checked)">
+            <label for="rest-${idx}">Mark rest day complete</label>
+          </div>
+        </div>
+      </div>`;
+  } else {
+    html += `<div class="exercises">`;
+    dayData.exercises.forEach(ex => {
+      html += renderExercise(ex, idx);
+    });
+    html += `</div>`;
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+function render() {
+  const main = document.getElementById('main');
+  const filtered = currentPhase === 'all'
+    ? PLAN
+    : PLAN.filter(d => d.phase === currentPhase);
+
+  if (filtered.length === 0) {
+    main.innerHTML = `<div class="empty">No sessions in this phase.</div>`;
+    return;
+  }
+
+  let html = '';
+  let lastPhase = null;
+
+  filtered.forEach((dayData, i) => {
+    // Phase header only in "all" view
+    if (currentPhase === 'all' && dayData.phase !== lastPhase) {
+      html += `<div class="phase-header">${PHASE_LABELS[dayData.phase]}</div>`;
+      lastPhase = dayData.phase;
+    }
+    const globalIdx = PLAN.indexOf(dayData);
+    html += renderDay(dayData, globalIdx);
+  });
+
+  main.innerHTML = html;
+  updateGlobalProgress();
+}
+
+// ── INTERACTIONS ───────────────────────────────────────────────────────────
+
+function toggleDay(idx, dayLabel) {
+  const key = 'open_' + dayLabel;
+  STATE[key] = !STATE[key];
+  saveState(STATE);
+  render();
+  // Scroll to keep day in view
+  setTimeout(() => {
+    const el = document.getElementById('dayblock-' + idx);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 50);
+}
+
+function toggleExercise(exId, dayIdx, checked) {
+  if (!STATE[exId]) STATE[exId] = { done: false, sets: {}, note: '', noteOpen: false };
+  STATE[exId].done = checked;
+  saveState(STATE);
+  // Re-render just the exercise row and day header
+  render();
+}
+
+function toggleRest(key, dayIdx, checked) {
+  STATE[key] = checked;
+  saveState(STATE);
+  render();
+}
+
+function toggleSet(exId, setNum, checked) {
+  if (!STATE[exId]) STATE[exId] = { done: false, sets: {}, note: '', noteOpen: false };
+  if (!STATE[exId].sets[setNum]) STATE[exId].sets[setNum] = {};
+  STATE[exId].sets[setNum].done = checked;
+  saveState(STATE);
+  updateGlobalProgress();
+}
+
+function updateSet(exId, setNum, field, value) {
+  if (!STATE[exId]) STATE[exId] = { done: false, sets: {}, note: '', noteOpen: false };
+  if (!STATE[exId].sets[setNum]) STATE[exId].sets[setNum] = {};
+  STATE[exId].sets[setNum][field] = value;
+  saveState(STATE);
+}
+
+function updateNote(exId, value) {
+  if (!STATE[exId]) STATE[exId] = { done: false, sets: {}, note: '', noteOpen: false };
+  STATE[exId].note = value;
+  saveState(STATE);
+}
+
+function toggleNote(exId, event) {
+  event.stopPropagation();
+  if (!STATE[exId]) STATE[exId] = { done: false, sets: {}, note: '', noteOpen: false };
+  STATE[exId].noteOpen = !STATE[exId].noteOpen;
+  saveState(STATE);
+  // Toggle just the note wrap without full re-render
+  const wrap = document.getElementById('note-wrap-' + exId);
+  const btn = event.target;
+  if (wrap) {
+    wrap.classList.toggle('open');
+    btn.textContent = wrap.classList.contains('open') ? 'close' : '+ note';
+  }
+}
+
+function switchPhase(phase, el) {
+  currentPhase = phase;
+  document.querySelectorAll('.phase-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+
+function updateGlobalProgress() {
+  let total = 0, done = 0;
+  PLAN.forEach(day => {
+    if (day.isRest) {
+      total++;
+      if (STATE[day.day + '_rest']) done++;
+    } else {
+      day.exercises.forEach(ex => {
+        total++;
+        if ((STATE[ex.id] || {}).done) done++;
+      });
+    }
+  });
+  document.getElementById('globalProgress').textContent = `${done} / ${total} complete`;
+}
+
+function confirmReset() {
+  if (confirm('Reset all progress? This cannot be undone.')) {
+    localStorage.removeItem('recovery_ramp_v1');
+    STATE = {};
+    render();
+  }
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
