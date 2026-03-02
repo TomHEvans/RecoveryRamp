@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recovery Ramp Tracker</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f0f0f;
+      --surface: #181818;
+      --surface2: #212121;
+      --border: #2a2a2a;
+      --border-bright: #3a3a3a;
+      --text: #e8e8e8;
+      --text-dim: #666;
+      --text-mid: #999;
+
+      --rest: #2a2a2a;
+      --rest-t: #777;
+      --upper: #0d3a5c;
+      --upper-t: #5bb3f0;
+      --wendler: #3a2800;
+      --wendler-t: #f0b84a;
+      --skill: #0d3320;
+      --skill-t: #4fd98e;
+      --leg: #2e1a00;
+      --leg-t: #f09a3a;
+
+      --accent: #4fd98e;
+      --complete: #4fd98e;
+      --complete-dim: #1a3d2a;
+      --radius: 6px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 28px 32px 24px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    header h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 22px;
+      letter-spacing: -0.5px;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    header p {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-family: 'DM Mono', monospace;
+      margin-top: 6px;
+    }
+
+    .header-right {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .progress-pill {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--complete);
+      background: var(--complete-dim);
+      border: 1px solid #2a5a3a;
+      padding: 5px 12px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+
+    .btn-reset {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--text-dim);
+      background: none;
+      border: 1px solid var(--border);
+      padding: 5px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-reset:hover {
+      border-color: #ff5555;
+      color: #ff5555;
+    }
+
+    /* ── PHASE TABS ── */
+    .phase-nav {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      overflow-x: auto;
+    }
+
+    .phase-tab {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      padding: 14px 20px 12px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      color: var(--text-dim);
+      white-space: nowrap;
+      transition: all 0.15s;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .phase-tab:hover {
+      color: var(--text-mid);
+    }
+
+    .phase-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* ── MAIN ── */
+    main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 28px 32px 60px;
+    }
+
+    /* ── DAY BLOCK ── */
+    .day-block {
+      margin-bottom: 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .day-block.day-complete {
+      border-color: #2a4a35;
+    }
+
+    .day-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      cursor: pointer;
+      background: var(--surface);
+      user-select: none;
+      gap: 12px;
+    }
+
+    .day-header:hover {
+      background: var(--surface2);
+    }
+
+    .day-label {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.3px;
+    }
+
+    .day-meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex: 1;
+      margin-left: 14px;
+      flex-wrap: wrap;
+    }
+
+    .type-tag {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 3px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .day-progress {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+
+    .day-progress.done {
+      color: var(--complete);
+    }
+
+    .chevron {
+      font-size: 10px;
+      color: var(--text-dim);
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+
+    .day-block.open .chevron {
+      transform: rotate(180deg);
+    }
+
+    /* ── EXERCISES ── */
+    .exercises {
+      display: none;
+      border-top: 1px solid var(--border);
+      background: var(--bg);
+    }
+
+    .day-block.open .exercises {
+      display: block;
+    }
+
+    .exercise-row {
+      display: grid;
+      grid-template-columns: 28px 1fr auto;
+      gap: 0;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      align-items: start;
+      transition: background 0.15s;
+    }
+
+    .exercise-row:last-child {
+      border-bottom: none;
+    }
+
+    .exercise-row.completed {
+      background: #111;
+      opacity: 0.6;
+    }
+
+    .exercise-row:hover {
+      background: var(--surface);
+    }
+
+    .ex-check {
+      margin-top: 1px;
+    }
+
+    .ex-check input[type="checkbox"] {
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border: 1.5px solid var(--border-bright);
+      border-radius: 3px;
+      cursor: pointer;
+      position: relative;
+      background: var(--surface);
+      transition: all 0.15s;
+      display: block;
+    }
+
+    .ex-check input[type="checkbox"]:checked {
+      background: var(--complete);
+      border-color: var(--complete);
+    }
+
+    .ex-check input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute;
+      left: 4px;
+      top: 1px;
+      width: 5px;
+      height: 9px;
+      border: 2px solid #0f0f0f;
+      border-top: none;
+      border-left: none;
+      transform: rotate(45deg);
+    }
+
+    .ex-body {
+      padding: 0 12px;
+    }
+
+    .ex-name {
+      font-weight: 500;
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.3;
+      margin-bottom: 4px;
+    }
+
+    .exercise-row.completed .ex-name {
+      text-decoration: line-through;
+      color: var(--text-dim);
+    }
+
+    .ex-metrics {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+
+    .ex-metric {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--text-mid);
+    }
+
+    .ex-metric span {
+      font-size: 10px;
+      color: var(--text-dim);
+      margin-right: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .ex-notes {
+      font-size: 11px;
+      color: var(--text-dim);
+      line-height: 1.5;
+      font-style: italic;
+    }
+
+    /* ── SET LOGGER ── */
+    .set-logger {
+      margin-top: 10px;
+    }
+
+    .set-logger-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .sets-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 6px;
+    }
+
+    .set-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .set-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--text-dim);
+      width: 22px;
+      flex-shrink: 0;
+    }
+
+    .set-input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      padding: 4px 8px;
+      width: 70px;
+      transition: border-color 0.15s;
+    }
+
+    .set-input:focus {
+      outline: none;
+      border-color: var(--border-bright);
+    }
+
+    .set-input::placeholder {
+      color: var(--text-dim);
+    }
+
+    .set-input-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    .set-check {
+      width: 14px;
+      height: 14px;
+      border: 1.5px solid var(--border-bright);
+      border-radius: 3px;
+      appearance: none;
+      cursor: pointer;
+      background: var(--surface);
+      transition: all 0.15s;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .set-check:checked {
+      background: var(--complete);
+      border-color: var(--complete);
+    }
+
+    .set-check:checked::after {
+      content: '';
+      position: absolute;
+      left: 3px;
+      top: 0px;
+      width: 5px;
+      height: 8px;
+      border: 2px solid #0f0f0f;
+      border-top: none;
+      border-left: none;
+      transform: rotate(45deg);
+    }
+
+    .ex-actions {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding-top: 1px;
+      flex-shrink: 0;
+    }
+
+    .btn-note {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--text-dim);
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 3px 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-note:hover {
+      border-color: var(--border-bright);
+      color: var(--text-mid);
+    }
+
+    /* ── SESSION NOTE ── */
+    .session-note-wrap {
+      display: none;
+      margin-top: 8px;
+    }
+
+    .session-note-wrap.open {
+      display: block;
+    }
+
+    .session-note {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      padding: 8px 10px;
+      resize: vertical;
+      min-height: 56px;
+      transition: border-color 0.15s;
+      line-height: 1.5;
+    }
+
+    .session-note:focus {
+      outline: none;
+      border-color: var(--border-bright);
+    }
+
+    .session-note::placeholder {
+      color: var(--text-dim);
+    }
+
+    /* ── PHASE HEADER ── */
+    .phase-header {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      padding: 20px 0 8px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+
+    /* ── EMPTY STATE ── */
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-dim);
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-bright);
+      border-radius: 3px;
+    }
+
+    /* ── AUTH UI ── */
+    .auth-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .btn-signin {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--text-mid);
+      background: none;
+      border: 1px solid var(--border);
+      padding: 5px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-signin:hover {
+      border-color: var(--border-bright);
+      color: var(--text);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .user-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .user-email {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--text-dim);
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .btn-signout {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--text-dim);
+      background: none;
+      border: 1px solid var(--border);
+      padding: 5px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-signout:hover {
+      border-color: #ff5555;
+      color: #ff5555;
+    }
+
+    .sync-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--border-bright);
+      flex-shrink: 0;
+      transition: background 0.4s;
+      cursor: default;
+    }
+
+    .sync-dot.synced {
+      background: var(--complete);
+    }
+
+    .sync-dot.saving {
+      background: #f0b84a;
+    }
+
+    .sync-dot.error {
+      background: #ff5555;
+    }
+
+    /* ── AUTH GATE ── */
+    #auth-gate {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 88px);
+      padding: 40px 20px;
+      opacity: 0;
+      /* slight delay so already-signed-in users don't see a flash */
+      animation: gateIn 0.2s ease 0.15s forwards;
+    }
+
+    @keyframes gateIn {
+      to {
+        opacity: 1;
+      }
+    }
+
+    .gate-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 48px 44px;
+      text-align: center;
+      max-width: 360px;
+      width: 100%;
+    }
+
+    .gate-wordmark {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 26px;
+      letter-spacing: -0.5px;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .gate-tag {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-bottom: 32px;
+    }
+
+    .gate-message {
+      font-size: 13px;
+      color: var(--text-mid);
+      line-height: 1.7;
+      margin-bottom: 28px;
+    }
+
+    .btn-google {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border-bright);
+      border-radius: 8px;
+      padding: 12px 20px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-google:hover {
+      background: #252525;
+      border-color: #4a4a4a;
+    }
+
+    .gate-footnote {
+      margin-top: 18px;
+      font-size: 11px;
+      font-family: 'DM Mono', monospace;
+      color: var(--text-dim);
+    }
+
+    .app-hidden {
+      display: none !important;
+    }
+  </style>
+
+  <!-- Firebase compat SDKs (no bundler needed) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+</head>
+
+<body>
+
+  <header>
+    <div>
+      <h1>Recovery Ramp</h1>
+      <p>2-week progressive ramp · shoulder & knee rehab · feeds into main training plan</p>
+    </div>
+    <div class="header-right">
+      <div class="progress-pill" id="globalProgress">0 / 0 complete</div>
+      <!-- Auth area: populated by onAuthStateChanged -->
+      <div class="auth-area" id="authArea">
+        <button class="btn-signin" onclick="signInWithGoogle()">Sign in</button>
+      </div>
+      <button class="btn-reset" onclick="confirmReset()">Reset all</button>
+    </div>
+  </header>
+
+  <!-- Sign-in gate: visible when signed out, hidden once authenticated -->
+  <div id="auth-gate">
+    <div class="gate-card">
+      <div class="gate-wordmark">Recovery Ramp</div>
+      <div class="gate-tag">2-week shoulder &amp; knee rehab tracker</div>
+      <div class="gate-message">Sign in to save your progress and keep<br>it synced across all your devices.</div>
+      <button class="btn-google" onclick="signInWithGoogle()">
+        <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#FFC107"
+            d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" />
+          <path fill="#FF3D00"
+            d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z" />
+          <path fill="#4CAF50"
+            d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0124 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z" />
+          <path fill="#1976D2"
+            d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 01-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z" />
+        </svg>
+        Sign in with Google
+      </button>
+      <div class="gate-footnote">Your data is private and only visible to you.</div>
+    </div>
+  </div>
+
+  <nav class="phase-nav app-hidden" id="phase-nav">
+    <button class="phase-tab active" data-phase="all" onclick="switchPhase('all', this)">All days</button>
+    <button class="phase-tab" data-phase="week1" onclick="switchPhase('week1', this)">Week 1</button>
+    <button class="phase-tab" data-phase="week2" onclick="switchPhase('week2', this)">Week 2</button>
+  </nav>
+
+  <main id="main" class="app-hidden"></main>
+
+  <script>
+    // ── FIREBASE ──────────────────────────────────────────────────────────────
+    // NOTE: These credentials are safe to expose in client-side code.
+    // Data is protected by Firebase Realtime Database security rules.
+    // For GitHub Pages, add your Pages domain to Firebase Console →
+    // Authentication → Settings → Authorized domains.
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCdOEMnDABJPR26Qg3yWkdtqdIKPbc5wpU",
+      authDomain: "recoveryramp-d130f.firebaseapp.com",
+      databaseURL: "https://recoveryramp-d130f-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "recoveryramp-d130f",
+      storageBucket: "recoveryramp-d130f.firebasestorage.app",
+      messagingSenderId: "96562019618",
+      appId: "1:96562019618:web:a9731b26fc31dcbbb2b97b"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    let dbRef = null;   // current user's DB ref
+    let dbCallback = null;   // active onValue callback (for cleanup)
+    let saveTimer = null;   // debounce handle for Firebase writes
+
+    function setSyncDot(status) { // 'synced' | 'saving' | 'error'
+      const dot = document.getElementById('syncDot');
+      if (!dot) return;
+      dot.className = 'sync-dot ' + status;
+      dot.title = { synced: 'Synced', saving: 'Saving…', error: 'Sync error' }[status] || '';
+    }
+
+    function signInWithGoogle() {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider).catch(err => alert('Sign-in failed: ' + err.message));
+    }
+
+    function signOut() {
+      auth.signOut();
+    }
+
+    auth.onAuthStateChanged(user => {
+      const authArea = document.getElementById('authArea');
+      const gate = document.getElementById('auth-gate');
+      const nav = document.getElementById('phase-nav');
+      const mainEl = document.getElementById('main');
+      if (!authArea) return;
+
+      // Detach any previous listener
+      if (dbRef && dbCallback) {
+        dbRef.off('value', dbCallback);
+        dbRef = null;
+        dbCallback = null;
+      }
+
+      if (user) {
+        // Hide gate, reveal app
+        gate.style.display = 'none';
+        nav.classList.remove('app-hidden');
+        mainEl.classList.remove('app-hidden');
+
+        // Render signed-in header UI
+        const avatarHtml = user.photoURL
+          ? `<img class="user-avatar" src="${user.photoURL}" referrerpolicy="no-referrer">`
+          : '';
+        authArea.innerHTML = `
+      <span class="sync-dot" id="syncDot" title="Connecting…"></span>
+      <div class="user-info">
+        ${avatarHtml}
+        <span class="user-email">${user.email}</span>
+      </div>
+      <button class="btn-signout" onclick="signOut()">Sign out</button>`;
+
+        // Attach realtime listener — remote changes update STATE and re-render
+        dbRef = db.ref('users/' + user.uid + '/state');
+        dbCallback = snap => {
+          const remote = snap.val();
+          if (remote) {
+            STATE = remote;
+            localStorage.setItem('recovery_ramp_v2', JSON.stringify(STATE));
+          }
+          setSyncDot('synced');
+          render();
+        };
+        dbRef.on('value', dbCallback, err => {
+          console.error('Firebase read error', err);
+          setSyncDot('error');
+        });
+
+      } else {
+        // Show gate, hide app
+        gate.style.display = 'flex';
+        nav.classList.add('app-hidden');
+        mainEl.classList.add('app-hidden');
+        authArea.innerHTML =
+          `<button class="btn-signin" onclick="signInWithGoogle()">Sign in</button>`;
+      }
+    });
+
+    // ── DATA ──────────────────────────────────────────────────────────────────
+
+    function makeDailyExercises(dayPrefix, week) {
+      const w1 = week === 1;
+      return [
+        {
+          id: `${dayPrefix}-s1`, type: "Shoulder",
+          name: "Banded Arm Raises",
+          metric: `3 × ${w1 ? '10' : '15'} reps`,
+          zone: "Light band",
+          hasSets: true, setCount: 3, setFields: ["reps"],
+          notes: ""
+        },
+        {
+          id: `${dayPrefix}-s2`, type: "Shoulder",
+          name: "Isometric End Range Lateral Hold",
+          metric: `3 × ${w1 ? '20' : '30'} secs`,
+          zone: "Controlled",
+          hasSets: true, setCount: 3, setFields: ["secs"],
+          notes: "Raise arm to lateral end range and hold. Keep shoulder packed throughout."
+        },
+        {
+          id: `${dayPrefix}-s3`, type: "Shoulder",
+          name: "Wall End-Range Holds",
+          metric: `3 × ${w1 ? '20' : '30'} secs`,
+          zone: "Controlled",
+          hasSets: true, setCount: 3, setFields: ["secs"],
+          notes: "Press arm into wall at end range overhead. Maintain scapular stability."
+        },
+        {
+          id: `${dayPrefix}-s4`, type: "Shoulder",
+          name: "Overhead Scap Engagement",
+          metric: `3 × ${w1 ? '10' : '15'} reps`,
+          zone: "Bodyweight",
+          hasSets: true, setCount: 3, setFields: ["reps"],
+          notes: "Focus on upward rotation and serratus activation at the top of overhead reach."
+        },
+        {
+          id: `${dayPrefix}-k1`, type: "Knee",
+          name: "Wall Squats",
+          metric: `3 × ${w1 ? '10' : '15'} reps`,
+          zone: "Bodyweight",
+          hasSets: true, setCount: 3, setFields: ["reps"],
+          notes: "Back flat against wall. Controlled descent and ascent."
+        },
+        {
+          id: `${dayPrefix}-k2`, type: "Knee",
+          name: "Wall Squat Holds",
+          metric: `3 × ${w1 ? '20' : '30'} secs`,
+          zone: "Bodyweight",
+          hasSets: true, setCount: 3, setFields: ["secs"],
+          notes: "Hold at parallel or comfortable depth. Steady breathing throughout."
+        },
+        {
+          id: `${dayPrefix}-k3`, type: "Knee",
+          name: "Leg Extensions",
+          metric: `3 × ${w1 ? '10' : '15'} reps`,
+          zone: "Light – RPE 4–5/10",
+          hasSets: true, setCount: 3, setFields: ["reps"],
+          notes: "Full range if pain-free. Stop short of any discomfort. Keep load conservative."
+        },
+        {
+          id: `${dayPrefix}-k4`, type: "Knee",
+          name: "Seated Leg Raise",
+          metric: `3 × ${w1 ? '10' : '15'} reps`,
+          zone: "Bodyweight",
+          hasSets: true, setCount: 3, setFields: ["reps"],
+          notes: "Seated with back supported. Raise leg to full extension, hold briefly at top."
+        }
+      ];
+    }
+
+    function makeStrengthA(dayPrefix, week) {
+      const w1 = week === 1;
+      return [
+        {
+          id: `${dayPrefix}-rdl`, type: "Strength",
+          name: "Romanian Deadlifts",
+          metric: `3 × ${w1 ? '8' : '10'} reps`,
+          zone: w1 ? "Light – RPE 5–6/10" : "Moderate – RPE 6–7/10",
+          hasSets: true, setCount: 3, setFields: ["weight (kg)", "reps"],
+          notes: "Hinge at hips, soft knee, bar close to body. Feel the hamstring stretch at the bottom."
+        },
+        {
+          id: `${dayPrefix}-ohp`, type: "Strength",
+          name: "Overhead Press",
+          metric: `3 × ${w1 ? '8' : '10'} reps`,
+          zone: w1 ? "Light – RPE 5–6/10" : "Moderate – RPE 6–7/10",
+          hasSets: true, setCount: 3, setFields: ["weight (kg)", "reps"],
+          notes: "Press vertical, tuck elbows slightly, full lockout at top. Brace core throughout."
+        }
+      ];
+    }
+
+    function makeStrengthB(dayPrefix, week) {
+      const w1 = week === 1;
+      return [
+        {
+          id: `${dayPrefix}-bench`, type: "Strength",
+          name: "Bench Press",
+          metric: `3 × ${w1 ? '8' : '10'} reps`,
+          zone: w1 ? "Light – RPE 5–6/10" : "Moderate – RPE 6–7/10",
+          hasSets: true, setCount: 3, setFields: ["weight (kg)", "reps"],
+          notes: "Controlled descent to chest, full press. Minimal leg drive during the ramp phase."
+        },
+        {
+          id: `${dayPrefix}-pu`, type: "Strength",
+          name: "Pullups",
+          metric: `3 × ${w1 ? '5' : '8'} reps`,
+          zone: w1 ? "Bodyweight or assisted" : "Bodyweight or +weight",
+          hasSets: true, setCount: 3, setFields: ["weight (kg)", "reps"],
+          notes: "Full hang to chin over bar. Log added weight; enter 0 for bodyweight."
+        }
+      ];
+    }
+
+    const PLAN = [];
+    for (let d = 1; d <= 14; d++) {
+      const week = d <= 7 ? 1 : 2;
+      const phase = d <= 7 ? 'week1' : 'week2';
+      const dayPrefix = `d${d}`;
+      // Odd days = A (Romanian deadlifts + Overhead press)
+      // Even days = B (Bench press + Pullups)
+      const isA = d % 2 === 1;
+
+      const exercises = [
+        ...makeDailyExercises(dayPrefix, week),
+        ...(isA ? makeStrengthA(dayPrefix, week) : makeStrengthB(dayPrefix, week))
+      ];
+
+      const types = [...new Set(exercises.map(e => e.type))];
+
+      PLAN.push({
+        day: `Day ${d}`,
+        phase: phase,
+        isRest: false,
+        types: types,
+        exercises: exercises
+      });
+    }
+
+    // ── TYPE STYLING ───────────────────────────────────────────────────────────
+
+    const TYPE_STYLE = {
+      Shoulder: { bg: "#0d2a40", color: "#5bb3f0" },
+      Knee: { bg: "#281200", color: "#f09a3a" },
+      Strength: { bg: "#0d2818", color: "#4fd98e" }
+    };
+
+    const PHASE_LABELS = {
+      week1: "Week 1 (Days 1–7)",
+      week2: "Week 2 (Days 8–14)"
+    };
+
+    // ── STATE ──────────────────────────────────────────────────────────────────
+
+    function loadState() {
+      try {
+        return JSON.parse(localStorage.getItem('recovery_ramp_v2') || '{}');
+      } catch (e) { return {}; }
+    }
+
+    function saveState(state) {
+      // Write to localStorage immediately (works offline)
+      localStorage.setItem('recovery_ramp_v2', JSON.stringify(state));
+
+      // Debounce-write to Firebase if signed in
+      const user = auth.currentUser;
+      if (user) {
+        setSyncDot('saving');
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => {
+          db.ref('users/' + user.uid + '/state').set(state)
+            .then(() => setSyncDot('synced'))
+            .catch(() => setSyncDot('error'));
+        }, 500);
+      }
+    }
+
+    let STATE = loadState();
+    let currentPhase = 'all';
+
+    // ── RENDER ─────────────────────────────────────────────────────────────────
+
+    function getExState(exId) {
+      return STATE[exId] || { done: false, sets: {}, note: '', noteOpen: false };
+    }
+
+    function renderTypeTag(type) {
+      const s = TYPE_STYLE[type] || { bg: '#222', color: '#999' };
+      return `<span class="type-tag" style="background:${s.bg};color:${s.color}">${type}</span>`;
+    }
+
+    function renderSetLogger(ex, exState) {
+      if (!ex.hasSets || ex.setFields.length === 0) return '';
+      let html = `<div class="set-logger">
+    <div class="set-logger-label">Sets</div>
+    <div class="sets-list">`;
+
+      for (let i = 1; i <= ex.setCount; i++) {
+        const setData = exState.sets[i] || {};
+        html += `<div class="set-row">
+      <span class="set-num">S${i}</span>`;
+
+        ex.setFields.forEach(field => {
+          const key = field.replace(/\s+/g, '_');
+          const val = setData[key] || '';
+          const shortLabel = field === 'weight (kg)' ? 'kg' : field === 'reps' ? 'reps' : field;
+          html += `<span class="set-input-label">${shortLabel}</span>
+               <input class="set-input" type="text" inputmode="decimal"
+                 placeholder="–"
+                 value="${val}"
+                 onchange="updateSet('${ex.id}', ${i}, '${key}', this.value)"
+                 onclick="event.stopPropagation()">`;
+        });
+
+        html += `<input type="checkbox" class="set-check"
+               ${setData.done ? 'checked' : ''}
+               onchange="toggleSet('${ex.id}', ${i}, this.checked)"
+               onclick="event.stopPropagation()">
+             </div>`;
+      }
+
+      html += `</div></div>`;
+      return html;
+    }
+
+    function renderExercise(ex, dayIdx) {
+      const exState = getExState(ex.id);
+      const done = exState.done;
+
+      return `
+    <div class="exercise-row ${done ? 'completed' : ''}" id="exrow-${ex.id}">
+      <div class="ex-check">
+        <input type="checkbox" ${done ? 'checked' : ''}
+          onchange="toggleExercise('${ex.id}', ${dayIdx}, this.checked)">
+      </div>
+      <div class="ex-body">
+        <div class="ex-name">${ex.name}</div>
+        <div class="ex-metrics">
+          <div class="ex-metric"><span>target</span>${ex.metric}</div>
+          <div class="ex-metric"><span>zone/load</span>${ex.zone}</div>
+        </div>
+        ${ex.notes ? `<div class="ex-notes">${ex.notes}</div>` : ''}
+        ${renderSetLogger(ex, exState)}
+        <div class="session-note-wrap ${exState.noteOpen ? 'open' : ''}" id="note-wrap-${ex.id}">
+          <textarea class="session-note" placeholder="Add a note for this exercise…"
+            onchange="updateNote('${ex.id}', this.value)"
+            onclick="event.stopPropagation()">${exState.note || ''}</textarea>
+        </div>
+      </div>
+      <div class="ex-actions">
+        <button class="btn-note" onclick="toggleNote('${ex.id}', event)">
+          ${exState.noteOpen ? 'close' : '+ note'}
+        </button>
+      </div>
+    </div>`;
+    }
+
+    function getDayProgress(dayData) {
+      const total = dayData.exercises.length;
+      const done = dayData.exercises.filter(ex => (STATE[ex.id] || {}).done).length;
+      return { done, total };
+    }
+
+    function renderDay(dayData, idx) {
+      const prog = getDayProgress(dayData);
+      const allDone = prog.done === prog.total && prog.total > 0;
+      const isOpen = STATE['open_' + dayData.day] || false;
+
+      const uniqueTypes = [...new Set(dayData.types)];
+
+      let html = `
+    <div class="day-block ${allDone ? 'day-complete' : ''} ${isOpen ? 'open' : ''}" id="dayblock-${idx}">
+      <div class="day-header" onclick="toggleDay(${idx}, '${dayData.day}')">
+        <span class="day-label">${dayData.day}</span>
+        <div class="day-meta">
+          ${uniqueTypes.map(t => renderTypeTag(t)).join('')}
+        </div>
+        <span class="day-progress ${allDone ? 'done' : ''}">
+          ${allDone ? '✓ done' : `${prog.done}/${prog.total}`}
+        </span>
+        <span class="chevron">▼</span>
+      </div>`;
+
+      html += `<div class="exercises">`;
+      dayData.exercises.forEach(ex => {
+        html += renderExercise(ex, idx);
+      });
+      html += `</div>`;
+
+      html += `</div>`;
+      return html;
+    }
+
+    function render() {
+      const main = document.getElementById('main');
+      const filtered = currentPhase === 'all'
+        ? PLAN
+        : PLAN.filter(d => d.phase === currentPhase);
+
+      if (filtered.length === 0) {
+        main.innerHTML = `<div class="empty">No sessions in this phase.</div>`;
+        return;
+      }
+
+      let html = '';
+      let lastPhase = null;
+
+      filtered.forEach((dayData, i) => {
+        if (currentPhase === 'all' && dayData.phase !== lastPhase) {
+          html += `<div class="phase-header">${PHASE_LABELS[dayData.phase]}</div>`;
+          lastPhase = dayData.phase;
+        }
+        const globalIdx = PLAN.indexOf(dayData);
+        html += renderDay(dayData, globalIdx);
+      });
+
+      main.innerHTML = html;
+      updateGlobalProgress();
+    }
+
+    // ── INTERACTIONS ───────────────────────────────────────────────────────────
+
+    function toggleDay(idx, dayLabel) {
+      const key = 'open_' + dayLabel;
+      STATE[key] = !STATE[key];
+      saveState(STATE);
+      render();
+      setTimeout(() => {
+        const el = document.getElementById('dayblock-' + idx);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 50);
+    }
+
+    function toggleExercise(exId, dayIdx, checked) {
+      if (!STATE[exId]) STATE[exId] = { done: false, sets: {}, note: '', noteOpen: false };
+      STATE[exId].done = checked;
+      saveState(STATE);
+      render();
+    }
+
+    function toggleSet(exId, setNum, checked) {
+      if (!STATE[exId]) STATE[exId] = { done: false, sets: {}, note: '', noteOpen: false };
+      if (!STATE[exId].sets[setNum]) STATE[exId].sets[setNum] = {};
+      STATE[exId].sets[setNum].done = checked;
+      saveState(STATE);
+      updateGlobalProgress();
+    }
+
+    function updateSet(exId, setNum, field, value) {
+      if (!STATE[exId]) STATE[exId] = { done: false, sets: {}, note: '', noteOpen: false };
+      if (!STATE[exId].sets[setNum]) STATE[exId].sets[setNum] = {};
+      STATE[exId].sets[setNum][field] = value;
+      saveState(STATE);
+    }
+
+    function updateNote(exId, value) {
+      if (!STATE[exId]) STATE[exId] = { done: false, sets: {}, note: '', noteOpen: false };
+      STATE[exId].note = value;
+      saveState(STATE);
+    }
+
+    function toggleNote(exId, event) {
+      event.stopPropagation();
+      if (!STATE[exId]) STATE[exId] = { done: false, sets: {}, note: '', noteOpen: false };
+      STATE[exId].noteOpen = !STATE[exId].noteOpen;
+      saveState(STATE);
+      const wrap = document.getElementById('note-wrap-' + exId);
+      const btn = event.target;
+      if (wrap) {
+        wrap.classList.toggle('open');
+        btn.textContent = wrap.classList.contains('open') ? 'close' : '+ note';
+      }
+    }
+
+    function switchPhase(phase, el) {
+      currentPhase = phase;
+      document.querySelectorAll('.phase-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      render();
+    }
+
+    function updateGlobalProgress() {
+      let total = 0, done = 0;
+      PLAN.forEach(day => {
+        day.exercises.forEach(ex => {
+          total++;
+          if ((STATE[ex.id] || {}).done) done++;
+        });
+      });
+      document.getElementById('globalProgress').textContent = `${done} / ${total} complete`;
+    }
+
+    function confirmReset() {
+      if (confirm('Reset all progress? This cannot be undone.')) {
+        localStorage.removeItem('recovery_ramp_v2');
+        STATE = {};
+        render();
+      }
+    }
+
+    // ── INIT ───────────────────────────────────────────────────────────────────
+    render();
+  </script>
+</body>
+
+</html>
