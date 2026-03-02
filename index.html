@@ -1043,7 +1043,13 @@
     // ── RENDER ─────────────────────────────────────────────────────────────────
 
     function getExState(exId) {
-      return STATE[exId] || { done: false, sets: {}, note: '', noteOpen: false };
+      const s = STATE[exId] || {};
+      return {
+        done: s.done || false,
+        sets: s.sets || {}, // Firebase drops empty {} — always default to {}
+        note: s.note || '',
+        noteOpen: s.noteOpen || false
+      };
     }
 
     function renderTypeTag(type) {
