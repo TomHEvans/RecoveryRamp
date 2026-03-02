@@ -27,7 +27,7 @@
     --leg:     #2e1a00;
     --leg-t:   #f09a3a;
 
-    --accent: #e8e8e8;
+    --accent: #4fd98e;
     --complete: #4fd98e;
     --complete-dim: #1a3d2a;
     --radius: 6px;
@@ -128,8 +128,8 @@
 
   .phase-tab:hover { color: var(--text-mid); }
   .phase-tab.active {
-    color: var(--text);
-    border-bottom-color: var(--text);
+    color: var(--accent);
+    border-bottom-color: var(--accent);
   }
 
   /* ── MAIN ── */
@@ -454,35 +454,6 @@
 
   .session-note::placeholder { color: var(--text-dim); }
 
-  /* ── REST DAY ── */
-  .rest-day-body {
-    padding: 20px 18px;
-    background: var(--bg);
-    border-top: 1px solid var(--border);
-  }
-
-  .rest-instructions {
-    font-size: 12px;
-    color: var(--text-dim);
-    line-height: 1.6;
-    font-style: italic;
-    max-width: 560px;
-  }
-
-  .rest-check-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 14px;
-  }
-
-  .rest-check-row label {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: var(--text-mid);
-    cursor: pointer;
-  }
-
   /* ── PHASE HEADER ── */
   .phase-header {
     font-family: 'DM Mono', monospace;
@@ -515,7 +486,7 @@
 <header>
   <div>
     <h1>Recovery Ramp</h1>
-    <p>Knee surgery return-to-training · 2 weeks · feeds into 8-week Hyrox plan</p>
+    <p>2-week progressive ramp · shoulder & knee rehab · feeds into main training plan</p>
   </div>
   <div class="header-right">
     <div class="progress-pill" id="globalProgress">0 / 0 complete</div>
@@ -525,9 +496,8 @@
 
 <nav class="phase-nav">
   <button class="phase-tab active" data-phase="all" onclick="switchPhase('all', this)">All days</button>
-  <button class="phase-tab" data-phase="phase1" onclick="switchPhase('phase1', this)">Phase 1 – Rest</button>
-  <button class="phase-tab" data-phase="phase2" onclick="switchPhase('phase2', this)">Phase 2 – Upper only</button>
-  <button class="phase-tab" data-phase="phase3" onclick="switchPhase('phase3', this)">Phase 3 – Leg reintro</button>
+  <button class="phase-tab" data-phase="week1" onclick="switchPhase('week1', this)">Week 1</button>
+  <button class="phase-tab" data-phase="week2" onclick="switchPhase('week2', this)">Week 2</button>
 </nav>
 
 <main id="main"></main>
@@ -535,348 +505,168 @@
 <script>
 // ── DATA ──────────────────────────────────────────────────────────────────
 
-const PLAN = [
-  // Phase 1 – Full rest
-  {
-    day: "Day 1", phase: "phase1", isRest: true,
-    types: ["Rest"],
-    notes: "Post-surgery. No exercise of any kind. Prioritise sleep, elevation and pain management.",
-    exercises: []
-  },
-  {
-    day: "Day 2", phase: "phase1", isRest: true,
-    types: ["Rest"],
-    notes: "Rest. Focus on keeping the knee elevated where possible. Hydrate well.",
-    exercises: []
-  },
-  {
-    day: "Day 3", phase: "phase1", isRest: true,
-    types: ["Rest"],
-    notes: "Rest. Short slow walks around the house are fine if comfortable – not a workout.",
-    exercises: []
-  },
-  {
-    day: "Day 4", phase: "phase1", isRest: true,
-    types: ["Rest"],
-    notes: "Last mandatory rest day. Assess how the knee feels before starting Phase 2 tomorrow. If still in significant pain or swelling, extend rest by 1–2 days.",
-    exercises: []
-  },
+function makeDailyExercises(dayPrefix, week) {
+  const w1 = week === 1;
+  return [
+    {
+      id: `${dayPrefix}-s1`, type: "Shoulder",
+      name: "Banded Arm Raises",
+      metric: `3 × ${w1 ? '10' : '15'} reps`,
+      zone: "Light band",
+      hasSets: true, setCount: 3, setFields: ["reps"],
+      notes: ""
+    },
+    {
+      id: `${dayPrefix}-s2`, type: "Shoulder",
+      name: "Isometric End Range Lateral Hold",
+      metric: `3 × ${w1 ? '20' : '30'} secs`,
+      zone: "Controlled",
+      hasSets: true, setCount: 3, setFields: ["secs"],
+      notes: "Raise arm to lateral end range and hold. Keep shoulder packed throughout."
+    },
+    {
+      id: `${dayPrefix}-s3`, type: "Shoulder",
+      name: "Wall End-Range Holds",
+      metric: `3 × ${w1 ? '20' : '30'} secs`,
+      zone: "Controlled",
+      hasSets: true, setCount: 3, setFields: ["secs"],
+      notes: "Press arm into wall at end range overhead. Maintain scapular stability."
+    },
+    {
+      id: `${dayPrefix}-s4`, type: "Shoulder",
+      name: "Overhead Scap Engagement",
+      metric: `3 × ${w1 ? '10' : '15'} reps`,
+      zone: "Bodyweight",
+      hasSets: true, setCount: 3, setFields: ["reps"],
+      notes: "Focus on upward rotation and serratus activation at the top of overhead reach."
+    },
+    {
+      id: `${dayPrefix}-k1`, type: "Knee",
+      name: "Wall Squats",
+      metric: `3 × ${w1 ? '10' : '15'} reps`,
+      zone: "Bodyweight",
+      hasSets: true, setCount: 3, setFields: ["reps"],
+      notes: "Back flat against wall. Controlled descent and ascent."
+    },
+    {
+      id: `${dayPrefix}-k2`, type: "Knee",
+      name: "Wall Squat Holds",
+      metric: `3 × ${w1 ? '20' : '30'} secs`,
+      zone: "Bodyweight",
+      hasSets: true, setCount: 3, setFields: ["secs"],
+      notes: "Hold at parallel or comfortable depth. Steady breathing throughout."
+    },
+    {
+      id: `${dayPrefix}-k3`, type: "Knee",
+      name: "Leg Extensions",
+      metric: `3 × ${w1 ? '10' : '15'} reps`,
+      zone: "Light – RPE 4–5/10",
+      hasSets: true, setCount: 3, setFields: ["reps"],
+      notes: "Full range if pain-free. Stop short of any discomfort. Keep load conservative."
+    },
+    {
+      id: `${dayPrefix}-k4`, type: "Knee",
+      name: "Seated Leg Raise",
+      metric: `3 × ${w1 ? '10' : '15'} reps`,
+      zone: "Bodyweight",
+      hasSets: true, setCount: 3, setFields: ["reps"],
+      notes: "Seated with back supported. Raise leg to full extension, hold briefly at top."
+    }
+  ];
+}
 
-  // Phase 2 – Upper only
-  {
-    day: "Day 5", phase: "phase2", isRest: false,
-    types: ["Upper", "Skill"],
-    exercises: [
-      {
-        id: "d5-e1", type: "Upper",
-        name: "Seated DB Shoulder Press",
-        metric: "3 × 10", zone: "Light – RPE 5/10",
-        hasSets: true, setCount: 3, setFields: ["weight (kg)", "reps"],
-        notes: "First session back. Seated to keep load off the knee entirely. Stop if any referred discomfort. Keep load conservative."
-      },
-      {
-        id: "d5-e2", type: "Upper",
-        name: "Banded Pull-Apart",
-        metric: "3 × 15", zone: "Light band",
-        hasSets: true, setCount: 3, setFields: ["reps"],
-        notes: "Shoulder health / rotator cuff. Controlled tempo throughout."
-      },
-      {
-        id: "d5-e3", type: "Skill",
-        name: "OHS Mobility – Banded distraction L",
-        metric: "60 sec", zone: "Band",
-        hasSets: false, setCount: 1, setFields: [],
-        notes: "Resume daily OHS habit – seated or lying if standing is uncomfortable."
-      },
-      {
-        id: "d5-e4", type: "Skill",
-        name: "OHS Mobility – Banded distraction R",
-        metric: "60 sec", zone: "Band",
-        hasSets: false, setCount: 1, setFields: [],
-        notes: ""
-      }
-    ]
-  },
-  {
-    day: "Day 6", phase: "phase2", isRest: true,
-    types: ["Rest"],
-    notes: "Recovery day. No training. Elevate and ice if swelling present.",
-    exercises: []
-  },
-  {
-    day: "Day 7", phase: "phase2", isRest: false,
-    types: ["Upper", "Skill"],
-    exercises: [
-      {
-        id: "d7-e1", type: "Upper",
-        name: "DB Bench Press (flat, seated or lying)",
-        metric: "3 × 8", zone: "Light – RPE 5/10",
-        hasSets: true, setCount: 3, setFields: ["weight (kg)", "reps"],
-        notes: "Wendler bench target lift in Week 1 of main plan. No leg drive. Keep load well below working weight."
-      },
-      {
-        id: "d7-e2", type: "Upper",
-        name: "Single-arm DB Row",
-        metric: "3 × 10 each side", zone: "Moderate – RPE 5/10",
-        hasSets: true, setCount: 3, setFields: ["weight (kg)", "reps"],
-        notes: "Braced on a bench. No twisting."
-      },
-      {
-        id: "d7-e3", type: "Skill",
-        name: "OHS Mobility – Banded distraction L",
-        metric: "60 sec", zone: "Band",
-        hasSets: false, setCount: 1, setFields: [],
-        notes: ""
-      },
-      {
-        id: "d7-e4", type: "Skill",
-        name: "OHS Mobility – Banded distraction R",
-        metric: "60 sec", zone: "Band",
-        hasSets: false, setCount: 1, setFields: [],
-        notes: ""
-      }
-    ]
-  },
+function makeStrengthA(dayPrefix, week) {
+  const w1 = week === 1;
+  return [
+    {
+      id: `${dayPrefix}-rdl`, type: "Strength",
+      name: "Romanian Deadlifts",
+      metric: `3 × ${w1 ? '8' : '10'} reps`,
+      zone: w1 ? "Light – RPE 5–6/10" : "Moderate – RPE 6–7/10",
+      hasSets: true, setCount: 3, setFields: ["weight (kg)", "reps"],
+      notes: "Hinge at hips, soft knee, bar close to body. Feel the hamstring stretch at the bottom."
+    },
+    {
+      id: `${dayPrefix}-ohp`, type: "Strength",
+      name: "Overhead Press",
+      metric: `3 × ${w1 ? '8' : '10'} reps`,
+      zone: w1 ? "Light – RPE 5–6/10" : "Moderate – RPE 6–7/10",
+      hasSets: true, setCount: 3, setFields: ["weight (kg)", "reps"],
+      notes: "Press vertical, tuck elbows slightly, full lockout at top. Brace core throughout."
+    }
+  ];
+}
 
-  // Phase 3 – Leg reintroduction
-  {
-    day: "Day 8", phase: "phase3", isRest: false,
-    types: ["Upper", "Skill"],
-    exercises: [
-      {
-        id: "d8-e1", type: "Upper",
-        name: "DB Shoulder Press (seated)",
-        metric: "3 × 10", zone: "Moderate – RPE 6/10",
-        hasSets: true, setCount: 3, setFields: ["weight (kg)", "reps"],
-        notes: "Slightly more load than Day 5 if comfortable. Still seated. Back off if any anterior shoulder discomfort."
-      },
-      {
-        id: "d8-e2", type: "Upper",
-        name: "Banded Pull-Apart",
-        metric: "3 × 15", zone: "Light band",
-        hasSets: true, setCount: 3, setFields: ["reps"],
-        notes: ""
-      },
-      {
-        id: "d8-e3", type: "Skill",
-        name: "OHS Mobility – Banded distraction L",
-        metric: "60 sec", zone: "Band",
-        hasSets: false, setCount: 1, setFields: [],
-        notes: ""
-      },
-      {
-        id: "d8-e4", type: "Skill",
-        name: "OHS Mobility – Banded distraction R",
-        metric: "60 sec", zone: "Band",
-        hasSets: false, setCount: 1, setFields: [],
-        notes: ""
-      }
-    ]
-  },
-  {
-    day: "Day 9", phase: "phase3", isRest: true,
-    types: ["Rest"],
-    notes: "Rest day. Assess knee readiness for first leg work tomorrow.",
-    exercises: []
-  },
-  {
-    day: "Day 10", phase: "phase3", isRest: false,
-    types: ["Leg", "Upper", "Skill"],
-    exercises: [
-      {
-        id: "d10-e1", type: "Leg",
-        name: "Glute Bridge (bodyweight, double leg)",
-        metric: "3 × 15", zone: "Bodyweight",
-        hasSets: true, setCount: 3, setFields: ["reps"],
-        notes: "First leg exercise. Lying position – minimal knee load. Stop if any sharp pain. Green light test for the knee."
-      },
-      {
-        id: "d10-e2", type: "Leg",
-        name: "Seated Leg Extension (very light)",
-        metric: "2 × 10", zone: "Very light – RPE 4/10",
-        hasSets: true, setCount: 2, setFields: ["weight (kg)", "reps"],
-        notes: "⚠ Only if cleared by surgeon / physio for early quad activation. If in doubt, skip and replace with another glute bridge set."
-      },
-      {
-        id: "d10-e3", type: "Upper",
-        name: "DB Bench Press",
-        metric: "3 × 8", zone: "Moderate – RPE 6/10",
-        hasSets: true, setCount: 3, setFields: ["weight (kg)", "reps"],
-        notes: "Progress slightly from Day 7. Moving toward Wendler working range."
-      },
-      {
-        id: "d10-e4", type: "Upper",
-        name: "Single-arm DB Row",
-        metric: "3 × 10 each side", zone: "Moderate – RPE 6/10",
-        hasSets: true, setCount: 3, setFields: ["weight (kg)", "reps"],
-        notes: ""
-      },
-      {
-        id: "d10-e5", type: "Skill",
-        name: "OHS Mobility – Banded distraction L",
-        metric: "60 sec", zone: "Band",
-        hasSets: false, setCount: 1, setFields: [],
-        notes: ""
-      },
-      {
-        id: "d10-e6", type: "Skill",
-        name: "OHS Mobility – Banded distraction R",
-        metric: "60 sec", zone: "Band",
-        hasSets: false, setCount: 1, setFields: [],
-        notes: ""
-      }
-    ]
-  },
-  {
-    day: "Day 11", phase: "phase3", isRest: true,
-    types: ["Rest"],
-    notes: "Rest. Note how the knee responded to Day 10 leg work before progressing.",
-    exercises: []
-  },
-  {
-    day: "Day 12", phase: "phase3", isRest: false,
-    types: ["Wendler", "Leg", "Upper", "Skill"],
-    exercises: [
-      {
-        id: "d12-e1", type: "Wendler",
-        name: "Bench Press – Set 1",
-        metric: "5 reps", zone: "55% TM",
-        hasSets: true, setCount: 1, setFields: ["weight (kg)", "reps"],
-        notes: "First proper Wendler bench. Slightly below Week 1 plan % to account for detraining. No leg drive – feet flat or elevated."
-      },
-      {
-        id: "d12-e2", type: "Wendler",
-        name: "Bench Press – Set 2",
-        metric: "5 reps", zone: "65% TM",
-        hasSets: true, setCount: 1, setFields: ["weight (kg)", "reps"],
-        notes: ""
-      },
-      {
-        id: "d12-e3", type: "Wendler",
-        name: "Bench Press – Set 3",
-        metric: "5+ reps", zone: "75% TM",
-        hasSets: true, setCount: 1, setFields: ["weight (kg)", "reps"],
-        notes: "AMRAP – conservative. Stop 1–2 reps before failure. Re-establishing feel, not testing max."
-      },
-      {
-        id: "d12-e4", type: "Leg",
-        name: "Glute Bridge (bodyweight)",
-        metric: "3 × 15", zone: "Bodyweight",
-        hasSets: true, setCount: 3, setFields: ["reps"],
-        notes: "If Day 10 went well. Increase to single-leg only if double-leg feels very easy and pain-free."
-      },
-      {
-        id: "d12-e5", type: "Upper",
-        name: "Banded Pull-Apart",
-        metric: "3 × 15", zone: "Light band",
-        hasSets: true, setCount: 3, setFields: ["reps"],
-        notes: "Shoulder antagonist work."
-      },
-      {
-        id: "d12-e6", type: "Skill",
-        name: "OHS Mobility – Banded distraction L",
-        metric: "60 sec", zone: "Band",
-        hasSets: false, setCount: 1, setFields: [],
-        notes: ""
-      },
-      {
-        id: "d12-e7", type: "Skill",
-        name: "OHS Mobility – Banded distraction R",
-        metric: "60 sec", zone: "Band",
-        hasSets: false, setCount: 1, setFields: [],
-        notes: ""
-      }
-    ]
-  },
-  {
-    day: "Day 13", phase: "phase3", isRest: true,
-    types: ["Rest"],
-    notes: "Rest. Final rest day before the readiness check session tomorrow.",
-    exercises: []
-  },
-  {
-    day: "Day 14", phase: "phase3", isRest: false,
-    types: ["Wendler", "Leg", "Skill"],
-    exercises: [
-      {
-        id: "d14-e1", type: "Wendler",
-        name: "Shoulder Press – Set 1",
-        metric: "5 reps", zone: "55% TM",
-        hasSets: true, setCount: 1, setFields: ["weight (kg)", "reps"],
-        notes: "Mirror bench approach – slightly below Week 1 plan percentages. Seated if needed."
-      },
-      {
-        id: "d14-e2", type: "Wendler",
-        name: "Shoulder Press – Set 2",
-        metric: "5 reps", zone: "65% TM",
-        hasSets: true, setCount: 1, setFields: ["weight (kg)", "reps"],
-        notes: ""
-      },
-      {
-        id: "d14-e3", type: "Wendler",
-        name: "Shoulder Press – Set 3",
-        metric: "5+ reps", zone: "75% TM",
-        hasSets: true, setCount: 1, setFields: ["weight (kg)", "reps"],
-        notes: "AMRAP – conservative. Stop 1–2 reps before failure."
-      },
-      {
-        id: "d14-e4", type: "Leg",
-        name: "Bodyweight Box Squat (to high box)",
-        metric: "2 × 8", zone: "Bodyweight – RPE 4/10",
-        hasSets: true, setCount: 2, setFields: ["reps"],
-        notes: "Squat to chair height or above – minimal knee flexion. Only attempt if glute bridges have been pain-free. Bridge toward Wendler squats in Week 1."
-      },
-      {
-        id: "d14-e5", type: "Leg",
-        name: "Standing Calf Raise",
-        metric: "3 × 15", zone: "Bodyweight",
-        hasSets: true, setCount: 3, setFields: ["reps"],
-        notes: "Low-load lower leg activation. Minimal knee involvement."
-      },
-      {
-        id: "d14-e6", type: "Skill",
-        name: "OHS Mobility – Banded distraction L",
-        metric: "60 sec", zone: "Band",
-        hasSets: false, setCount: 1, setFields: [],
-        notes: "End of recovery ramp. If today went well, you're ready to begin Week 1 of the main Hyrox plan."
-      },
-      {
-        id: "d14-e7", type: "Skill",
-        name: "OHS Mobility – Banded distraction R",
-        metric: "60 sec", zone: "Band",
-        hasSets: false, setCount: 1, setFields: [],
-        notes: ""
-      }
-    ]
-  }
-];
+function makeStrengthB(dayPrefix, week) {
+  const w1 = week === 1;
+  return [
+    {
+      id: `${dayPrefix}-bench`, type: "Strength",
+      name: "Bench Press",
+      metric: `3 × ${w1 ? '8' : '10'} reps`,
+      zone: w1 ? "Light – RPE 5–6/10" : "Moderate – RPE 6–7/10",
+      hasSets: true, setCount: 3, setFields: ["weight (kg)", "reps"],
+      notes: "Controlled descent to chest, full press. Minimal leg drive during the ramp phase."
+    },
+    {
+      id: `${dayPrefix}-pu`, type: "Strength",
+      name: "Pullups",
+      metric: `3 × ${w1 ? '5' : '8'} reps`,
+      zone: w1 ? "Bodyweight or assisted" : "Bodyweight or +weight",
+      hasSets: true, setCount: 3, setFields: ["weight (kg)", "reps"],
+      notes: "Full hang to chin over bar. Log added weight; enter 0 for bodyweight."
+    }
+  ];
+}
+
+const PLAN = [];
+for (let d = 1; d <= 14; d++) {
+  const week = d <= 7 ? 1 : 2;
+  const phase = d <= 7 ? 'week1' : 'week2';
+  const dayPrefix = `d${d}`;
+  // Odd days = A (Romanian deadlifts + Overhead press)
+  // Even days = B (Bench press + Pullups)
+  const isA = d % 2 === 1;
+
+  const exercises = [
+    ...makeDailyExercises(dayPrefix, week),
+    ...(isA ? makeStrengthA(dayPrefix, week) : makeStrengthB(dayPrefix, week))
+  ];
+
+  const types = [...new Set(exercises.map(e => e.type))];
+
+  PLAN.push({
+    day: `Day ${d}`,
+    phase: phase,
+    isRest: false,
+    types: types,
+    exercises: exercises
+  });
+}
 
 // ── TYPE STYLING ───────────────────────────────────────────────────────────
 
 const TYPE_STYLE = {
-  Rest:    { bg: "#1e1e1e", color: "#666" },
-  Upper:   { bg: "#0d2a40", color: "#5bb3f0" },
-  Wendler: { bg: "#2e1f00", color: "#f0b84a" },
-  Skill:   { bg: "#0a2818", color: "#4fd98e" },
-  Leg:     { bg: "#281200", color: "#f09a3a" }
+  Shoulder: { bg: "#0d2a40", color: "#5bb3f0" },
+  Knee:     { bg: "#281200", color: "#f09a3a" },
+  Strength: { bg: "#0d2818", color: "#4fd98e" }
 };
 
 const PHASE_LABELS = {
-  phase1: "Phase 1 – Full rest (Days 1–4)",
-  phase2: "Phase 2 – Upper body only (Days 5–7)",
-  phase3: "Phase 3 – Leg reintroduction (Days 8–14)"
+  week1: "Week 1 (Days 1–7)",
+  week2: "Week 2 (Days 8–14)"
 };
 
 // ── STATE ──────────────────────────────────────────────────────────────────
 
 function loadState() {
   try {
-    return JSON.parse(localStorage.getItem('recovery_ramp_v1') || '{}');
+    return JSON.parse(localStorage.getItem('recovery_ramp_v2') || '{}');
   } catch(e) { return {}; }
 }
 
 function saveState(state) {
-  localStorage.setItem('recovery_ramp_v1', JSON.stringify(state));
+  localStorage.setItem('recovery_ramp_v2', JSON.stringify(state));
 }
 
 let STATE = loadState();
@@ -930,7 +720,6 @@ function renderSetLogger(ex, exState) {
 function renderExercise(ex, dayIdx) {
   const exState = getExState(ex.id);
   const done = exState.done;
-  const ts = TYPE_STYLE[ex.type] || { bg: '#222', color: '#999' };
 
   return `
     <div class="exercise-row ${done ? 'completed' : ''}" id="exrow-${ex.id}">
@@ -961,10 +750,6 @@ function renderExercise(ex, dayIdx) {
 }
 
 function getDayProgress(dayData) {
-  if (dayData.isRest) {
-    const restKey = dayData.day + '_rest';
-    return STATE[restKey] ? { done: 1, total: 1 } : { done: 0, total: 1 };
-  }
   const total = dayData.exercises.length;
   const done = dayData.exercises.filter(ex => (STATE[ex.id] || {}).done).length;
   return { done, total };
@@ -975,7 +760,6 @@ function renderDay(dayData, idx) {
   const allDone = prog.done === prog.total && prog.total > 0;
   const isOpen = STATE['open_' + dayData.day] || false;
 
-  // Collect unique types for tags
   const uniqueTypes = [...new Set(dayData.types)];
 
   let html = `
@@ -991,27 +775,11 @@ function renderDay(dayData, idx) {
         <span class="chevron">▼</span>
       </div>`;
 
-  if (dayData.isRest) {
-    const restKey = dayData.day + '_rest';
-    const checked = STATE[restKey] || false;
-    html += `
-      <div class="exercises ${isOpen ? '' : ''}">
-        <div class="rest-day-body">
-          <p class="rest-instructions">${dayData.notes}</p>
-          <div class="rest-check-row">
-            <input type="checkbox" class="set-check" id="rest-${idx}" ${checked ? 'checked' : ''}
-              onchange="toggleRest('${restKey}', ${idx}, this.checked)">
-            <label for="rest-${idx}">Mark rest day complete</label>
-          </div>
-        </div>
-      </div>`;
-  } else {
-    html += `<div class="exercises">`;
-    dayData.exercises.forEach(ex => {
-      html += renderExercise(ex, idx);
-    });
-    html += `</div>`;
-  }
+  html += `<div class="exercises">`;
+  dayData.exercises.forEach(ex => {
+    html += renderExercise(ex, idx);
+  });
+  html += `</div>`;
 
   html += `</div>`;
   return html;
@@ -1032,7 +800,6 @@ function render() {
   let lastPhase = null;
 
   filtered.forEach((dayData, i) => {
-    // Phase header only in "all" view
     if (currentPhase === 'all' && dayData.phase !== lastPhase) {
       html += `<div class="phase-header">${PHASE_LABELS[dayData.phase]}</div>`;
       lastPhase = dayData.phase;
@@ -1052,7 +819,6 @@ function toggleDay(idx, dayLabel) {
   STATE[key] = !STATE[key];
   saveState(STATE);
   render();
-  // Scroll to keep day in view
   setTimeout(() => {
     const el = document.getElementById('dayblock-' + idx);
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -1062,13 +828,6 @@ function toggleDay(idx, dayLabel) {
 function toggleExercise(exId, dayIdx, checked) {
   if (!STATE[exId]) STATE[exId] = { done: false, sets: {}, note: '', noteOpen: false };
   STATE[exId].done = checked;
-  saveState(STATE);
-  // Re-render just the exercise row and day header
-  render();
-}
-
-function toggleRest(key, dayIdx, checked) {
-  STATE[key] = checked;
   saveState(STATE);
   render();
 }
@@ -1099,7 +858,6 @@ function toggleNote(exId, event) {
   if (!STATE[exId]) STATE[exId] = { done: false, sets: {}, note: '', noteOpen: false };
   STATE[exId].noteOpen = !STATE[exId].noteOpen;
   saveState(STATE);
-  // Toggle just the note wrap without full re-render
   const wrap = document.getElementById('note-wrap-' + exId);
   const btn = event.target;
   if (wrap) {
@@ -1118,22 +876,17 @@ function switchPhase(phase, el) {
 function updateGlobalProgress() {
   let total = 0, done = 0;
   PLAN.forEach(day => {
-    if (day.isRest) {
+    day.exercises.forEach(ex => {
       total++;
-      if (STATE[day.day + '_rest']) done++;
-    } else {
-      day.exercises.forEach(ex => {
-        total++;
-        if ((STATE[ex.id] || {}).done) done++;
-      });
-    }
+      if ((STATE[ex.id] || {}).done) done++;
+    });
   });
   document.getElementById('globalProgress').textContent = `${done} / ${total} complete`;
 }
 
 function confirmReset() {
   if (confirm('Reset all progress? This cannot be undone.')) {
-    localStorage.removeItem('recovery_ramp_v1');
+    localStorage.removeItem('recovery_ramp_v2');
     STATE = {};
     render();
   }
